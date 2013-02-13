@@ -1,0 +1,1 @@
+{{ sudouser }} ALL=NOPASSWD:ALL
