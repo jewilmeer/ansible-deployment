@@ -1,0 +1,22 @@
+---
+- hosts: webserver
+  sudo: true
+  user: jewilmeer
+  gather_facts: false
+
+  vars:
+
+
+  tasks:
+    - name: install packages
+      apt: pkg=$item state=installed update_cache=yes
+      with_items:
+        - nginx-full
+    - name: configure nginx-passenger
+      copy: src=files/passenger.conf dest=/etc/nginx/conf.d/passenger.conf mode=0711
+      notify:
+      - restart nginx
+
+  handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted

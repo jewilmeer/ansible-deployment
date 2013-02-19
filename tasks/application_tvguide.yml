@@ -1,0 +1,33 @@
+---
+- hosts: webserver
+  sudo: false
+  user: jewilmeer
+
+  vars_files:
+    - variables.yml
+
+  vars:
+    home: /home/$user
+    webroot: $home/www
+    domain: jewilmeer.com
+    application_path: $webroot/$domain
+
+  tasks:
+    - name: create application $application_path
+      shell: mkdir -p $application_path
+
+    - name: Add keyfiles for github communication
+      copy: src=~/.ssh/github_deploy_$item dest=$home/.ssh/$item mode=0700
+      with_items:
+        - id_rsa
+        - id_rsa.pub
+
+    - name: ensure github is a known host
+      shell: ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts
+      sudo: true
+
+    - name: 'checkout application'
+      git: repo=git@github.com:jewilmeer/tv-guide.git dest=$application_path
+
+    - name: bundle
+      shell: "chdir=$application_path $ruby_bin_path/bundle install --deployment"

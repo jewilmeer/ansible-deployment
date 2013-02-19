@@ -1,0 +1,52 @@
+---
+- hosts: webserver
+  sudo: false
+  user: jewilmeer
+  gather_facts: false
+
+  vars:
+    home: /home/$user
+    ruby_version: "1.9.3-p374"
+    ruby_bin_path: /home/$user/.rbenv/shims
+    rbenv_exec: /home/$user/.rbenv/bin/rbenv
+
+  vars_files:
+    - variables.yml
+
+  tasks:
+    - name: checkout rb-env
+      action: git repo=git://github.com/sstephenson/rbenv.git dest=/home/$user/.rbenv
+
+    - name: checkout ruby-build
+      git: repo=git://github.com/sstephenson/ruby-build.git dest=/home/$user/.rbenv/plugins/ruby-build
+
+    - name: Copy bashrc template
+      template: src=../templates/bashrc.tmpl dest=$home/.bashrc
+
+    - name: set bash_profile
+      template: src=../templates/bash_profile.tmpl dest=$home/.bash_profile
+
+    - name: set the source
+      shell: source $home/.bash_profile executable=/bin/bash
+
+    - name: install ruby $ruby_version
+      shell: $rbenv_exec install $ruby_version creates=/home/$user/.rbenv/shims/ruby executable=/bin/bash
+
+    - name: make ruby $ruby_version global
+      shell: $rbenv_exec global $ruby_version
+
+    - name: gem, could you stop making docs
+      shell: 'echo "gem: --no-rdoc --no-ri" >> $home/.gemrc'
+
+    - name: install basic gems
+      shell: $ruby_bin_path/gem install $item --no-rdoc --no-ri
+      with_items:
+      - passenger
+      - bundler
+
+    - name: install passenger
+      shell: $ruby_bin_path/passenger-install-nginx-module --auto --auto-download --prefix=/opt/nginx creates=/opt/nginx
+      sudo: true
+
+
+# inspired by https://github.com/tobyhede/ansible-centos-rails-nginx-passenger/blob/master/ruby.yml

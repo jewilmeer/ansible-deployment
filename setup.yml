@@ -2,69 +2,68 @@
 - hosts: webserver
   user: vagrant
   sudo: true
-  vars:
-    sudouser: jewilmeer
 
-  # vars_prompt:
-  #   - name: "sudouser"
-  #     prompt: "sudouser"
-  #     private: no
+  vars_files:
+    - tasks/variables.yml
 
   tasks:
-  # - script: files/init.sh
-  # - include: tasks/upgrade.yml
+    - name: 'Set timezone to Europe/Amsterdam'
+      shell: cp /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
 
+    # set default locale
+    - name: 'Set locale add en_US.UTF-8'
+      lineinfile: dest=/etc/locale.gen line='en_US.UTF-8 UTF-8' regexp='^en_US.UTF-8 UTF-8' state=present insertafter=EOF
+    - name: 'Set locale remove ISO-8859-1'
+      lineinfile: dest=/etc/locale.gen line='en_US ISO-8859-1' regexp='^en_US ISO-8859-1' state=absent
+    - name: 'Set locale, generate new locale'
+      shell: LANG=en_US.UTF-8 locale-gen --purge en_US.UTF-8 executable=/bin/bash
+    - name: 'Set default locale LANG to UTF-8 '
+      lineinfile: dest=/etc/default/locale line='LANG="en_US.utf8"' regexp='^LANG=' state=present insertafter=BOF
+    - name: 'Set default locale LC_ALL to UTF-8 '
+      lineinfile: dest=/etc/environment line='LC_ALL="en_US.utf8"' regexp='^LC_ALL=' state=present insertafter=BOF
 
-  - name: 'Set timezone to Europe/Amsterdam'
-    shell: cp /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
+    - name: create $user as user
+      action: user name=$user createhome=yes shell=/bin/bash state=present groups=sudo generate_ssh_key=true
+    - name: make $user a sandwich
+      action: template src=files/sudoers.d dest=/etc/sudoers.d/$user
+    - name: set authorized_keys for $user
+      copy: src=files/authorized_keys dest=/home/$user/.ssh/authorized_keys mode=0600 owner=$user group=$user
 
-  # set default locale
-  - name: 'Set locale add en_US.UTF-8'
-    lineinfile: dest=/etc/locale.gen line='en_US.UTF-8 UTF-8' regexp='^en_US.UTF-8 UTF-8' state=present insertafter=EOF
-  - name: 'Set locale remove ISO-8859-1'
-    lineinfile: dest=/etc/locale.gen line='en_US ISO-8859-1' regexp='^en_US ISO-8859-1' state=absent
-  - name: 'Set locale, generate new locale'
-    shell: LANG=en_US.UTF-8 locale-gen --purge en_US.UTF-8 executable=/bin/bash
-  - name: 'Set default locale LANG to UTF-8 '
-    lineinfile: dest=/etc/default/locale line='LANG="en_US.utf8"' regexp='^LANG=' state=present insertafter=BOF
-  - name: 'Set default locale LC_ALL to UTF-8 '
-    lineinfile: dest=/etc/environment line='LC_ALL="en_US.utf8"' regexp='^LC_ALL=' state=present insertafter=BOF
+    - name: 'Install basic required packages'
+      apt: pkg=$item state=installed update_cache=yes
+      with_items:
+        - build-essential
+        - libcurl4-openssl-dev
+        - zlib1g-dev
+        - iptables
+        - ntp
+        - fail2ban
+        - vim
+        - git
+        # for apt-add-repository
+        - python-software-properties
+        # Monitor network traffic
+        - iptraf
+    - name: Copy firewall rules
+      copy: src=files/iptables.firewall.rules dest=/etc/iptables.firewall.rules
+    - copy: src=files/iptables.init dest=/etc/network/if-pre-up.d/iptables mode=0711
+      notify:
+      - reload firewall
 
-  - name: create $sudouser as user
-    action: user name=$sudouser createhome=yes shell=/bin/bash state=present groups=sudo generate_ssh_key=true
-  - name: make $sudouser a sandwich
-    action: template src=files/sudoers.d dest=/etc/sudoers.d/$sudouser
-  - name: set authorized_keys for $sudouser
-    copy: src=files/authorized_keys dest=/home/$sudouser/.ssh/authorized_keys mode=0600 owner=$sudouser group=$sudouser
+    # Awesome enough for now
+    # - name: fail2ban configure
+    #   copy: src=files/fail2ban.jail.local dest=/etc/fail2ban mode=644 owner=root group=root
+    #   notify:
+    #   - restart fail2ban
 
-  - name: 'Install basic required packages'
-    apt: pkg=$item state=installed
-    with_items:
-      - iptables
-      - ntp
-      - fail2ban
-      - vim
-
-  - name: Copy firewall rules
-    copy: src=files/iptables.firewall.rules dest=/etc/iptables.firewall.rules
-  - copy: src=files/iptables.init dest=/etc/network/if-pre-up.d/iptables mode=0711
-    notify:
-    - reload firewall
-
-  # Awesome enough for now
-  # - name: fail2ban configure
-  #   copy: src=files/fail2ban.jail.local dest=/etc/fail2ban mode=644 owner=root group=root
-  #   notify:
-  #   - restart fail2ban
-
-  - name: prevent root login
-    lineinfile: dest=/etc/ssh/sshd_config regexp="^PermitRootLogin" line="PermitRootLogin no"
-    notify: restart ssh
+    - name: prevent root login
+      lineinfile: dest=/etc/ssh/sshd_config regexp="^PermitRootLogin" line="PermitRootLogin no"
+      notify: restart ssh
 
   handlers:
     - name: reload firewall
       shell: /etc/network/if-pre-up.d/iptables
-    - name: restart fail2ban
-      service: name=fail2ban state=restarted
+    # - name: restart fail2ban
+    #   service: name=fail2ban state=restarted
     - name: restart ssh
       service: name=ssh state=restarted
