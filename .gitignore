@@ -1,6 +1,7 @@
+.vagrant
+
 # hide application specific configs
 tasks/application_*.yml
-
 
 # ignore used var files
 variables/*.yml
