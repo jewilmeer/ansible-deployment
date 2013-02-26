@@ -14,11 +14,11 @@ This setup includes to following:
 # Runned commands
 
 ## Install. but ask for ssh-password
-ansible-playbook -i ansible_hosts setup.yml -k
+basic setup: `ansible-playbook -i ansible_hosts setup.yml -k`
+
 ssh password: vagrant
 
-## Further configuration
-ansible-playbook -i ansible_hosts tasks/ruby.yml
+other setup: `ansible-playbook -i ansible_hosts tasks/ruby.yml tasks/your_application.yml`
 
 ## Ip-tables setup
 http://deangerber.com/blog/2011/09/10/basic-iptables-firewall-configuration/
