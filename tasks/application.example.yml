@@ -1,11 +1,11 @@
 ---
 - hosts: webserver
   sudo: false
-  user: jewilmeer
+  user: jewilmeer #same as within variables.yml
 
   vars_files:
-    - ../variables/variables.yml
-    - ../variables/tvguide.yml
+    - ../variables/global.yml
+    - ../variables/application.example.yml
 
   vars:
     home: /home/$user
