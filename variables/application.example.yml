@@ -1,0 +1,4 @@
+---
+pg_user: my-user
+pg_password: my-secret-to-die-in-a-fire
+pg_db_name: my-db-name

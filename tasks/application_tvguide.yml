@@ -4,7 +4,8 @@
   user: jewilmeer
 
   vars_files:
-    - variables.yml
+    - ../variables/variables.yml
+    - ../variables/tvguide.yml
 
   vars:
     home: /home/$user
@@ -27,7 +28,13 @@
       sudo: true
 
     - name: 'checkout application'
-      git: repo=git@github.com:jewilmeer/tv-guide.git dest=$application_path
+      git: repo=git@github.com:jewilmeer/tv-guide.git dest=$application_path version=feature-ansible-deployment
 
     - name: bundle
       shell: "chdir=$application_path $ruby_bin_path/bundle install --deployment"
+
+    - name: copy database config
+      template: src=../templates/database.yml.tmpl dest=$application_path/config/database.yml
+
+    - name: migrate
+      shell: "chdir=$application_path RAILS_ENV=production $ruby_bin_path/rake db:setup"

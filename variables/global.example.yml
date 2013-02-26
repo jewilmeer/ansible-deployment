@@ -1,0 +1,4 @@
+---
+  user: henk kanaries
+  ruby_bin_path: /home/$user/.rbenv/shims
+  postgresql_master_password: my-dirty-secret

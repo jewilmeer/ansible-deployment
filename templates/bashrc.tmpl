@@ -109,6 +109,8 @@ if ! shopt -oq posix; then
   fi
 fi
 
+export RAILS_ENV=production
+
 # rbenv path extension
 export PATH=$HOME/.rbenv/bin:$PATH
 eval "$(rbenv init -)"

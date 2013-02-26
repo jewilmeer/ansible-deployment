@@ -1,0 +1,5 @@
+# ignore used var files
+variables/*.yml
+
+# do not ignore example files
+!variables/*.example.yml

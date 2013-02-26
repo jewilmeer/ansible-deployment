@@ -11,17 +11,31 @@
     rbenv_exec: /home/$user/.rbenv/bin/rbenv
 
   vars_files:
-    - variables.yml
-
+    - ../variables/variables.yml
+    - ../variables/tvguide.yml
   tasks:
+    - name: 'Install required apt packages'
+      apt: pkg=$item state=installed update_cache=yes
+      sudo: true
+      with_items:
+        - libxml2-dev
+        - libxslt1-dev
+        - postgresql-9.1
+        - postgresql-client-9.1
+        - postgresql-server-dev-9.1
+        # - python-psycopg2 # Manage postgresql rights
+        # - python3-psycopg2 # Manage postgresql rights
+
+    # - name: Create db user
+    #   sudo: true
+    #   action: shell sudo -u postgres psql -c "CREATE ROLE $pg_user WITH SUPERUSER CREATEDB LOGIN password '$pg_password';"
+    #   action: shell sudo -u postgres psql -c "ALTER ROLE $pg_user WITH SUPERUSER CREATEDB LOGIN password '$pg_password';"
+
     - name: checkout rb-env
       action: git repo=git://github.com/sstephenson/rbenv.git dest=/home/$user/.rbenv
 
     - name: checkout ruby-build
       git: repo=git://github.com/sstephenson/ruby-build.git dest=/home/$user/.rbenv/plugins/ruby-build
-
-    - name: Copy bashrc template
-      template: src=../templates/bashrc.tmpl dest=$home/.bashrc
 
     - name: set bash_profile
       template: src=../templates/bash_profile.tmpl dest=$home/.bash_profile
@@ -43,10 +57,9 @@
       with_items:
       - passenger
       - bundler
-
+      - therubyracer
     - name: install passenger
       shell: $ruby_bin_path/passenger-install-nginx-module --auto --auto-download --prefix=/opt/nginx creates=/opt/nginx
       sudo: true
-
 
 # inspired by https://github.com/tobyhede/ansible-centos-rails-nginx-passenger/blob/master/ruby.yml
