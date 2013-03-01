@@ -11,7 +11,7 @@
     rbenv_exec: /home/$user/.rbenv/bin/rbenv
 
   vars_files:
-    - ../variables/variables.yml
+    - ../variables/global.yml
     - ../variables/tvguide.yml
   tasks:
     - name: 'Install required apt packages'

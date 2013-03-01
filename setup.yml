@@ -4,7 +4,7 @@
   sudo: true
 
   vars_files:
-    - tasks/variables.yml
+    - variables/global.yml
 
   tasks:
     - name: 'Set timezone to Europe/Amsterdam'
