@@ -58,6 +58,10 @@
       - passenger
       - bundler
       - therubyracer
+
+    - name: rehash rbenv
+      shell: $rbenv_exec rehash
+
     - name: install passenger
       shell: $ruby_bin_path/passenger-install-nginx-module --auto --auto-download --prefix=/opt/nginx creates=/opt/nginx
       sudo: true
