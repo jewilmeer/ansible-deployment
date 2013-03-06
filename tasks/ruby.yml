@@ -65,8 +65,29 @@
     - name: rehash rbenv
       shell: $rbenv_exec rehash
 
-    - name: install passenger
+    - name: install nginx with passenger module
       shell: $ruby_bin_path/passenger-install-nginx-module --auto --auto-download --prefix=/opt/nginx creates=/opt/nginx
+      sudo: true
+
+    - name: configure nginx as service
+      template: src=../templates/nginx.init.tmpl dest=/etc/init.d/nginx mode=0755
+      sudo: true
+
+    - name: replace nginx.conf
+      template: src=../templates/nginx.conf.tmpl dest=/opt/nginx/conf/nginx.conf
+      sudo: true
+      notify: restart nginx
+
+    - name: prepare for vhost configs
+      shell: mkdir /opt/nginx/conf/vhosts
+
+    - name: start nginx service and have it run during system startup
+      action: service name=nginx state=started enabled=yes pattern=/opt/nginx/sbin/nginx
+      sudo: true
+
+  handlers:
+    - name: restart nginx
+      shell: /etc/init.d/nginx restart
       sudo: true
 
 # inspired by https://github.com/tobyhede/ansible-centos-rails-nginx-passenger/blob/master/ruby.yml
