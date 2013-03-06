@@ -79,10 +79,15 @@
       notify: restart nginx
 
     - name: prepare for vhost configs
-      shell: mkdir /opt/nginx/conf/vhosts
+      shell: mkdir -p /opt/nginx/conf/vhosts
+      sudo: true
+
+    - name: stop nginx service
+      action: "service name=nginx state=stopped pattern=nginx"
+      sudo: true
 
     - name: start nginx service and have it run during system startup
-      action: service name=nginx state=started enabled=yes pattern=/opt/nginx/sbin/nginx
+      action: "service name=nginx state=started enabled=yes pattern=nginx"
       sudo: true
 
   handlers:
