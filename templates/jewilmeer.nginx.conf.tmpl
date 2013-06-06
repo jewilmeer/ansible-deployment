@@ -47,7 +47,7 @@ server {
   }
 
 
-  location ~ ^/(assets|images|javascripts|stylesheets|swfs|system)/ {
+  location ~ ^/(assets|images|javascripts|stylesheets|swfs|system|uploads)/ {
     gzip_static on;
     expires     max;
     add_header  Cache-Control public;
