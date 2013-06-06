@@ -1,0 +1,71 @@
+---
+- hosts: webserver
+  sudo: false
+  user: jewilmeer
+
+  vars_files:
+    - ../variables/global.yml
+    - ../variables/tvguide.yml
+
+  vars:
+    home: /home/$user
+    webroot: $home/www
+    domain: jewilmeer
+    application_path: $webroot/$domain
+
+  tasks:
+    - name: install redis
+      apt: pkg=redis-server state=installed update_cache=yes
+      sudo: true
+
+    - name: create application $application_path
+      shell: mkdir -p $application_path
+
+    - name: configure rails site
+      template: src=../templates/jewilmeer.nginx.conf.tmpl dest=/etc/nginx/sites-enabled/jewilmeer.conf
+      sudo: true
+
+    - name: Add keyfiles for github communication
+      copy: src=~/.ssh/github_deploy_$item dest=$home/.ssh/$item mode=0700
+      with_items:
+        - id_rsa
+        - id_rsa.pub
+
+    - name: ensure github is a known host
+      shell: ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts
+      sudo: true
+
+    - name: create db user
+      sudo: true
+      action: shell sudo -u postgres psql -c "CREATE ROLE $pg_user WITH SUPERUSER CREATEDB LOGIN password '$pg_password';"
+      ignore_errors: True #skip if existing
+
+    - name: 'checkout application'
+      git: repo=git@github.com:jewilmeer/tv-guide.git dest=$application_path
+
+    - name: bundle
+      shell: "chdir=$application_path bundle install --deployment --without development test"
+
+    - name: prepare assets
+      shell: "chdir=$application_path bundle exec rake assets:precompile"
+      ignore_errors: True #skip if existing
+
+    - name: copy database config
+      template: src=../templates/database.yml.tmpl dest=$application_path/config/database.yml
+
+    - name: migrate
+      shell: "chdir=$application_path RAILS_ENV=production bundle exec rake db:create db:migrate"
+
+    - name: Install sidekiq as a service
+      copy: src=../files/sidekiq.conf dest=/etc/init/sidekiq.conf
+      notify: restart sidekiq
+      sudo: true
+
+  handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted
+      sudo: true
+
+    - name: restart sidekiq
+      service: name=sidekiq state=restarted
+      sudo: true
