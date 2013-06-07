@@ -40,8 +40,8 @@
       action: shell sudo -u postgres psql -c "CREATE ROLE $pg_user WITH SUPERUSER CREATEDB LOGIN password '$pg_password';"
       ignore_errors: True #skip if existing
 
-    - name: 'checkout application'
-      git: repo=git@github.com:jewilmeer/tv-guide.git dest=$application_path
+    - name: 'clone application'
+      git: repo=git@github.com:jewilmeer/tv-guide.git dest=$application_path depth=1
 
     - name: bundle
       shell: "chdir=$application_path bundle install --deployment --without development test"
@@ -54,7 +54,7 @@
       template: src=../templates/database.yml.tmpl dest=$application_path/config/database.yml
 
     - name: migrate
-      shell: "chdir=$application_path RAILS_ENV=production bundle exec rake db:create db:migrate"
+      shell: "chdir=$application_path RAILS_ENV=production bundle exec rake db:setup"
 
     - name: Install sidekiq as a service
       copy: src=../files/sidekiq.conf dest=/etc/init/sidekiq.conf
