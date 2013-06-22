@@ -25,7 +25,7 @@
       sudo: true
 
     - name: prepare assets
-      shell: "chdir=$application_path bundle exec rake assets:precompile"
+      shell: "chdir=$application_path RAILS_ENV=production bundle exec rake assets:precompile"
       ignore_errors: True #skip if existing
 
     - name: copy database config

@@ -15,7 +15,15 @@
     - ../variables/tvguide.yml
   tasks:
     - name: 'install brightbox deb repositories'
-      apt_repository: repo=ppa:brightbox/ruby-ng
+      apt_repository: repo=ppa:brightbox/ruby-ng state=present
+      sudo: true
+
+    - name: 'install brightbox deb repositories'
+      apt_repository: repo=ppa:brightbox/passenger-experimental state=absent
+      sudo: true
+
+    - name: 'install brightbox deb repositories'
+      apt_repository: repo=ppa:brightbox/passenger-ng state=absent
       sudo: true
 
     - name: 'Install required apt packages'
@@ -30,6 +38,8 @@
         - postgresql-9.1
         - postgresql-client-9.1
         - postgresql-server-dev-9.1
+        - nodejs
+        - memcached
 
     - name: create db user
       sudo: true
