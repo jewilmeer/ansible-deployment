@@ -1,5 +1,5 @@
 [webserver]
-192.168.33.10
+tv.meergit.nl
 
 [vagrant]
 192.168.33.10

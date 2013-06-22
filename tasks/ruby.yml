@@ -14,15 +14,32 @@
     - ../variables/global.yml
     - ../variables/tvguide.yml
   tasks:
+    - name: 'install brightbox deb repositories'
+      apt_repository: repo=ppa:brightbox/ruby-ng state=present
+      sudo: true
+
+    - name: 'install brightbox deb repositories'
+      apt_repository: repo=ppa:brightbox/passenger-experimental state=absent
+      sudo: true
+
+    - name: 'install brightbox deb repositories'
+      apt_repository: repo=ppa:brightbox/passenger-ng state=absent
+      sudo: true
+
     - name: 'Install required apt packages'
       apt: pkg=$item state=installed update_cache=yes
       sudo: true
       with_items:
+        - ruby1.9.3
+        - ruby-switch
+        - nginx-full
         - libxml2-dev
         - libxslt1-dev
         - postgresql-9.1
         - postgresql-client-9.1
         - postgresql-server-dev-9.1
+        - nodejs
+        - memcached
 
     - name: create db user
       sudo: true
@@ -34,65 +51,37 @@
       action: shell sudo -u postgres psql -c "CREATE ROLE $pg_user WITH SUPERUSER CREATEDB LOGIN password '$pg_password';"
       ignore_errors: True #skip if existing
 
-    - name: checkout rb-env
-      action: git repo=git://github.com/sstephenson/rbenv.git dest=/home/$user/.rbenv
-
-    - name: checkout ruby-build
-      git: repo=git://github.com/sstephenson/ruby-build.git dest=/home/$user/.rbenv/plugins/ruby-build
-
-    - name: set bash_profile
-      template: src=../templates/bash_profile.tmpl dest=$home/.bash_profile
-
-    - name: set the source
-      shell: source $home/.bash_profile executable=/bin/bash
-
-    - name: install ruby $ruby_version
-      shell: $rbenv_exec install $ruby_version creates=/home/$user/.rbenv/shims/ruby executable=/bin/bash
-
-    - name: make ruby $ruby_version global
-      shell: $rbenv_exec global $ruby_version
-
     - name: gem, could you stop making docs
       shell: 'echo "gem: --no-rdoc --no-ri" >> $home/.gemrc'
 
+    - gem: name=rack state=present version=1.4.5
+      sudo: true
+
     - name: install basic gems
-      shell: $ruby_bin_path/gem install $item --no-rdoc --no-ri
+      gem: name=$item state=present
       with_items:
-      - passenger
       - bundler
+      - passenger
       - therubyracer
-
-    - name: rehash rbenv
-      shell: $rbenv_exec rehash
-
-    - name: install nginx with passenger module
-      shell: $ruby_bin_path/passenger-install-nginx-module --auto --auto-download --prefix=/opt/nginx creates=/opt/nginx
-      sudo: true
-
-    - name: configure nginx as service
-      template: src=../templates/nginx.init.tmpl dest=/etc/init.d/nginx mode=0755
-      sudo: true
-
-    - name: replace nginx.conf
-      template: src=../templates/nginx.conf.tmpl dest=/opt/nginx/conf/nginx.conf
       sudo: true
       notify: restart nginx
 
-    - name: prepare for vhost configs
-      shell: mkdir -p /opt/nginx/conf/vhosts
+    - name: remove default nginx site
+      file: path=/etc/nginx/sites-enabled/default state=absent
       sudo: true
+      notify: restart nginx
 
-    - name: stop nginx service
-      action: "service name=nginx state=stopped pattern=nginx"
+    - name: set config files for nginx
+      copy: src=../files/$item dest=/etc/nginx/conf.d/$item
+      with_items:
+        - passenger.conf
+        - nginx.conf
       sudo: true
-
-    - name: start nginx service and have it run during system startup
-      action: "service name=nginx state=started enabled=yes pattern=nginx"
-      sudo: true
+      notify: restart nginx
 
   handlers:
     - name: restart nginx
-      shell: /etc/init.d/nginx restart
+      service: name=nginx state=restarted
       sudo: true
 
 # inspired by https://github.com/tobyhede/ansible-centos-rails-nginx-passenger/blob/master/ruby.yml

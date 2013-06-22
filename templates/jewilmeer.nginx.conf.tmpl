@@ -1,0 +1,75 @@
+# found at https://gist.github.com/mikhailov/711913
+server {
+  listen       80;
+  server_name  localhost jewilmeer.com tv.meergit.nl;
+
+  location ~ \.(php|html)$ {
+    deny all;
+  }
+
+  root /home/jewilmeer/www/{{domain}}/public;
+  try_files $uri /system/maintenance.html @passenger;
+
+  location @passenger {
+    passenger_enabled on;
+    passenger_min_instances 1;
+    rails_env production;
+    # passenger_set_cgi_param HTTP_X_FORWARDED_PROTO https;
+    # limit_req zone=one burst=5;
+  }
+
+
+  error_page   500 502 504  /500.html;
+  error_page   503 @503;
+
+  location = /50x.html {
+    root   html;
+  }
+
+  location = /404.html {
+    root   html;
+  }
+
+  location @503 {
+    error_page 405 = /system/maintenance.html;
+    if (-f $document_root/system/maintenance.html) {
+      rewrite ^(.*)$ /system/maintenance.html break;
+    }
+    rewrite ^(.*)$ /503.html break;
+  }
+
+  if ($request_method !~ ^(GET|HEAD|PUT|POST|DELETE|OPTIONS)$ ){
+    return 405;
+  }
+
+  if (-f $document_root/system/maintenance.html) {
+    return 503;
+  }
+
+
+  location ~ ^/(assets|images|javascripts|stylesheets|swfs|system|uploads)/ {
+    gzip_static on;
+    expires     max;
+    add_header  Cache-Control public;
+    add_header  Last-Modified "";
+    add_header  ETag "";
+    break;
+  }
+
+
+  location = /favicon.ico {
+    expires    max;
+    add_header Cache-Control public;
+  }
+
+
+  location ~ \.(php|html)$ {
+    return 405;
+  }
+
+
+  # access_log /dev/null;
+  # error_log /dev/null;
+}
+
+passenger_pre_start http://locahost/;

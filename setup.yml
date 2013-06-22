@@ -1,6 +1,6 @@
 ---
 - hosts: webserver
-  user: vagrant
+  user: root
   sudo: true
 
   vars_files:
@@ -9,14 +9,6 @@
   tasks:
     - name: 'Set timezone to Europe/Amsterdam'
       shell: cp /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
-
-    # set default locale
-    - name: 'Set locale add en_US.UTF-8'
-      lineinfile: dest=/etc/locale.gen line='en_US.UTF-8 UTF-8' regexp='^en_US.UTF-8 UTF-8' state=present insertafter=EOF
-    - name: 'Set locale remove ISO-8859-1'
-      lineinfile: dest=/etc/locale.gen line='en_US ISO-8859-1' regexp='^en_US ISO-8859-1' state=absent
-    - name: 'Set locale, generate new locale'
-      shell: LANG=en_US.UTF-8 locale-gen --purge en_US.UTF-8 executable=/bin/bash
     - name: 'Set default locale LANG to UTF-8 '
       lineinfile: dest=/etc/default/locale line='LANG="en_US.utf8"' regexp='^LANG=' state=present insertafter=BOF
     - name: 'Set default locale LC_ALL to UTF-8 '
@@ -25,7 +17,7 @@
     - name: create $user as user
       action: user name=$user createhome=yes shell=/bin/bash state=present groups=sudo generate_ssh_key=true
     - name: make $user a sandwich
-      action: template src=files/sudoers.d dest=/etc/sudoers.d/$user
+      action: template src=files/sudoers.d dest=/etc/sudoers.d/$user mode=0440
     - name: set authorized_keys for $user
       copy: src=files/authorized_keys dest=/home/$user/.ssh/authorized_keys mode=0600 owner=$user group=$user
 
@@ -37,11 +29,14 @@
         - zlib1g-dev
         - iptables
         - ntp
-        - fail2ban
+        # - fail2ban
         - vim
         - git
+        - screen
+        - htop
+        - libpcre3-dev
         # for apt-add-repository
-        - python-software-properties
+        - software-properties-common
         # Monitor network traffic
         - iptraf
     - name: Copy firewall rules
