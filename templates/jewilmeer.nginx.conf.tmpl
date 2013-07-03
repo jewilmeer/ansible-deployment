@@ -1,13 +1,13 @@
 # found at https://gist.github.com/mikhailov/711913
 server {
   listen       80;
-  server_name  localhost jewilmeer.com tv.meergit.nl;
+  server_name  localhost netflikker.nl jewilmeer.com tv.meergit.nl;
 
   location ~ \.(php|html)$ {
     deny all;
   }
 
-  root /home/jewilmeer/www/{{domain}}/public;
+  root /var/www/tvguide/current/public;
   try_files $uri /system/maintenance.html @passenger;
 
   location @passenger {

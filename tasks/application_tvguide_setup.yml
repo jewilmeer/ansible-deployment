@@ -54,7 +54,7 @@
       template: src=../templates/database.yml.tmpl dest=$application_path/config/database.yml
 
     - name: migrate
-      shell: "chdir=$application_path RAILS_ENV=production bundle exec rake db:setup"
+      shell: "chdir=$application_path RAILS_ENV=production bundle exec rake db:create db:migrate db:seed"
 
     - name: Install sidekiq as a service
       copy: src=../files/sidekiq.conf dest=/etc/init/sidekiq.conf
