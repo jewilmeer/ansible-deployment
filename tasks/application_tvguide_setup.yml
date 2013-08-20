@@ -9,8 +9,8 @@
 
   vars:
     home: /home/$user
-    webroot: $home/www
-    domain: jewilmeer
+    webroot: /var/www
+    domain: netflikker
     application_path: $webroot/$domain
 
   tasks:
@@ -22,7 +22,7 @@
       shell: mkdir -p $application_path
 
     - name: configure rails site
-      template: src=../templates/jewilmeer.nginx.conf.tmpl dest=/etc/nginx/sites-enabled/jewilmeer.conf
+      template: src=../templates/netflikker.nginx.conf.tmpl dest=/etc/nginx/sites-enabled/netflikker.conf
       sudo: true
 
     - name: Add keyfiles for github communication
