@@ -10,7 +10,7 @@
   vars:
     home: /home/$user
     webroot: /var/www
-    domain: netflikker
+    domain: tvguide
     application_path: $webroot/$domain
 
   tasks:
@@ -19,7 +19,8 @@
       sudo: true
 
     - name: create application $application_path
-      shell: mkdir -p $application_path
+      file: path=$application_path state=directory owner=jewilmeer
+      sudo: true
 
     - name: configure rails site
       template: src=../templates/netflikker.nginx.conf.tmpl dest=/etc/nginx/sites-enabled/netflikker.conf
@@ -40,26 +41,35 @@
       action: shell sudo -u postgres psql -c "CREATE ROLE $pg_user WITH SUPERUSER CREATEDB LOGIN password '$pg_password';"
       ignore_errors: True #skip if existing
 
-    - name: 'clone application'
-      git: repo=git@github.com:jewilmeer/tv-guide.git dest=$application_path depth=1
-
-    - name: bundle
-      shell: "chdir=$application_path bundle install --deployment --without development test"
-
-    - name: prepare assets
-      shell: "chdir=$application_path bundle exec rake assets:precompile"
-      ignore_errors: True #skip if existing
-
-    - name: copy database config
-      template: src=../templates/database.yml.tmpl dest=$application_path/config/database.yml
-
-    - name: migrate
-      shell: "chdir=$application_path RAILS_ENV=production bundle exec rake db:create db:migrate db:seed"
-
     - name: Install sidekiq as a service
       copy: src=../files/sidekiq.conf dest=/etc/init/sidekiq.conf
       notify: restart sidekiq
       sudo: true
+
+    - name: "Setup finished, now run capistrano: 'cap HOSTS=$ansible_ssh_host deploy:setup deploy'"
+      shell: "echo \"Setup finished, now run capistrano: 'cap HOSTS=$ansible_ssh_host deploy:setup deploy'\""
+    # - name: 'clone application'
+    #   git: repo=git@github.com:jewilmeer/tv-guide.git dest=$application_path depth=1
+
+    # - name: bundle
+    #   shell: "chdir=$application_path bundle install --deployment --without development test"
+
+    # - name: prepare assets
+    #   shell: "chdir=$application_path bundle exec rake assets:precompile"
+    #   ignore_errors: True #skip if existing
+
+    # - name: copy database config
+    #   template: src=../templates/database.yml.tmpl dest=$application_path/config/database.yml
+
+    # - name: migrate
+    #   shell: "chdir=$application_path RAILS_ENV=production bundle exec rake db:create db:migrate db:seed"
+    - name: 'Create logs directory'
+      file: path=$application_path/shared/log state=directory owner=jewilmeer
+
+    - name: 'install logrotate for tvguide'
+      template: src=../templates/logrotate.d/netflikker.conf dest=/etc/logrotate.d/netflikker.conf
+      sudo: true
+
 
   handlers:
     - name: restart nginx
