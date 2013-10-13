@@ -46,23 +46,6 @@
       notify: restart sidekiq
       sudo: true
 
-    - name: "Setup finished, now run capistrano: 'cap HOSTS=$ansible_ssh_host deploy:setup deploy'"
-      shell: "echo \"Setup finished, now run capistrano: 'cap HOSTS=$ansible_ssh_host deploy:setup deploy'\""
-    # - name: 'clone application'
-    #   git: repo=git@github.com:jewilmeer/tv-guide.git dest=$application_path depth=1
-
-    # - name: bundle
-    #   shell: "chdir=$application_path bundle install --deployment --without development test"
-
-    # - name: prepare assets
-    #   shell: "chdir=$application_path bundle exec rake assets:precompile"
-    #   ignore_errors: True #skip if existing
-
-    # - name: copy database config
-    #   template: src=../templates/database.yml.tmpl dest=$application_path/config/database.yml
-
-    # - name: migrate
-    #   shell: "chdir=$application_path RAILS_ENV=production bundle exec rake db:create db:migrate db:seed"
     - name: 'Create logs directory'
       file: path=$application_path/shared/log state=directory owner=jewilmeer
 
@@ -70,6 +53,8 @@
       template: src=../templates/logrotate.d/netflikker.conf dest=/etc/logrotate.d/netflikker.conf
       sudo: true
 
+    - name: "Setup finished, now run capistrano: 'cap HOSTS=$ansible_ssh_host deploy:setup deploy'"
+      shell: "echo \"Setup finished, now run capistrano: 'cap HOSTS=$ansible_ssh_host deploy:setup deploy'\""
 
   handlers:
     - name: restart nginx
