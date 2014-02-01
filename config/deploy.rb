@@ -1,4 +1,5 @@
 require 'bundler/capistrano'
+require 'new_relic/recipes'
 # require 'sidekiq/capistrano'
 load 'deploy/assets'
 
@@ -12,9 +13,9 @@ set :scm, :git # You can set :scm explicitly or Capistrano will make an intellig
 set :branch, :master
 set :deploy_via, :remote_cache
 
-
 server 'netflikker.nl', :app, :web, :db, :primary=>true
 set :user, :jewilmeer
+set :keep_releases, 3
 
 # if you want to clean up old releases on each deploy uncomment this:
 after "deploy:restart", "deploy:cleanup"
@@ -47,8 +48,14 @@ after "deploy:stop",    "sidekiq:stop"
 after "deploy:start",   "sidekiq:start"
 before "deploy:restart", "sidekiq:restart"
 
-namespace :sidekiq do
+# We need to run this after our collector mongrels are up and running
+# This goes out even if the deploy fails, sadly
+after "deploy", "newrelic:notice_deployment"
+after "deploy:update", "newrelic:notice_deployment"
+after "deploy:migrations", "newrelic:notice_deployment"
+after "deploy:cold", "newrelic:notice_deployment"
 
+namespace :sidekiq do
   desc "Stop sidekiq"
   task :stop do
     run "#{try_sudo} service sidekiq stop"
