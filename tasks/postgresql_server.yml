@@ -1,0 +1,19 @@
+---
+- hosts: webserver
+  sudo: false
+
+  vars_files:
+    - ../variables/global.yml
+
+  tasks:
+    - name: 'Install basic required packages'
+      apt: pkg=$item state=installed update_cache=yes
+      sudo: true
+      with_items:
+        - postgresql-9.1
+        - postgresql-server-dev-9.1
+
+    - name: create db user
+      sudo: true
+      action: shell sudo -u postgres psql -c "CREATE ROLE jewilmeer WITH SUPERUSER CREATEDB LOGIN password '{{pg_password}}';"
+      ignore_errors: True #skip if existing

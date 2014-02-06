@@ -1,0 +1,13 @@
+# Update all packages to the latest version
+---
+- hosts: webserver
+  sudo: true
+
+  tasks:
+    - name: "Safely update installed packages"
+      apt: upgrade=dist update_cache=yes cache_valid_time=3600
+      notify: restart nginx
+
+  handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted
