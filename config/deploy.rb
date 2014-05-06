@@ -36,6 +36,7 @@ namespace :deploy do
     run "ln -sf #{shared_path}/config/newrelic.yml #{release_path}/config/"
     run "ln -sf #{shared_path}/config/exceptional.yml #{release_path}/config/"
     run "ln -sf #{shared_path}/config/sidekiq.yml #{release_path}/config/"
+    run "ln -sf #{shared_path}/config/s3.yml #{release_path}/config/"
     run "ln -sf #{shared_path}/uploads #{release_path}/public/"
   end
 end
